@@ -121,29 +121,157 @@
     </div>
 </div>
 
+
 <style>
 .calendar-grid {
     display: grid;
     grid-template-columns: repeat(7, 1fr);
-    gap: 5px;
+    gap: 8px;
     margin-top: 15px;
 }
 .calendar-day {
     width: 100%;
-    height: 40px;
+    height: 45px;
     display: flex;
     align-items: center;
     justify-content: center;
-    border-radius: 4px;
+    border-radius: 8px;
     font-weight: bold;
-    cursor: default;
-    border: 1px solid #dee2e6;
+    cursor: pointer;
+    transition: all 0.3s ease;
+    position: relative;
+    overflow: hidden;
+    border: 2px solid transparent;
 }
-.progress-bar {
-    font-size: 0.8rem;
+.calendar-day:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+}
+.calendar-day.completed {
+    background: linear-gradient(135deg, #28a745, #20c997);
+    color: white;
+    border-color: #28a745;
+}
+.calendar-day.missed {
+    background: linear-gradient(135deg, #dc3545, #fd7e14);
+    color: white;
+    border-color: #dc3545;
+}
+.calendar-day.empty {
+    background: #f8f9fa;
+    color: #6c757d;
+    border-color: #dee2e6;
+}
+.calendar-day.today {
+    border-color: #007bff;
+    border-width: 3px;
+}
+.calendar-day .streak-badge {
+    position: absolute;
+    top: 2px;
+    right: 2px;
+    font-size: 0.6rem;
+    background: rgba(255,255,255,0.9);
+    color: #333;
+    border-radius: 50%;
+    width: 16px;
+    height: 16px;
     display: flex;
     align-items: center;
     justify-content: center;
 }
+
+/* Анимация прогресс-бара */
+.progress-bar {
+    transition: width 1s ease-in-out;
+}
+
+/* Анимация появления карточек */
+.habit-card {
+    animation: slideIn 0.5s ease-out;
+    animation-fill-mode: both;
+}
+
+@keyframes slideIn {
+    from {
+        opacity: 0;
+        transform: translateY(20px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+/* Задержка для каждой карточки */
+.habit-card:nth-child(1) { animation-delay: 0.1s; }
+.habit-card:nth-child(2) { animation-delay: 0.2s; }
+.habit-card:nth-child(3) { animation-delay: 0.3s; }
 </style>
+
+<script>
+// Инициализация календаря с Tooltip
+document.addEventListener('DOMContentLoaded', function() {
+    // Инициализация tooltip для дней календаря
+    const calendarDays = document.querySelectorAll('.calendar-day');
+    calendarDays.forEach(day => {
+        new bootstrap.Tooltip(day);
+    });
+
+    // Анимация прогресс-баров
+    const progressBars = document.querySelectorAll('.progress-bar');
+    progressBars.forEach(bar => {
+        const width = bar.style.width;
+        bar.style.width = '0';
+        setTimeout(() => {
+            bar.style.width = width;
+        }, 300);
+    });
+
+    // Переключение статуса привычки с анимацией
+    const habitCheckboxes = document.querySelectorAll('.habit-check');
+    habitCheckboxes.forEach(checkbox => {
+        checkbox.addEventListener('change', function() {
+            const card = this.closest('.habit-card');
+            if (this.checked) {
+                card.classList.add('completed');
+                card.classList.remove('missed');
+
+                // Анимация "проверки"
+                const checkmark = document.createElement('span');
+                checkmark.innerHTML = '✓';
+                checkmark.style.cssText = `
+                    position: absolute;
+                    top: 50%;
+                    left: 50%;
+                    transform: translate(-50%, -50%);
+                    font-size: 2rem;
+                    color: #28a745;
+                    opacity: 0;
+                    animation: fadeInOut 1s ease;
+                `;
+                card.appendChild(checkmark);
+
+                setTimeout(() => {
+                    checkmark.remove();
+                }, 1000);
+            } else {
+                card.classList.add('missed');
+                card.classList.remove('completed');
+            }
+        });
+    });
+});
+
+// CSS для анимации проверки
+const style = document.createElement('style');
+style.textContent = `
+@keyframes fadeInOut {
+    0% { opacity: 0; transform: translate(-50%, -50%) scale(0.5); }
+    50% { opacity: 1; transform: translate(-50%, -50%) scale(1.2); }
+    100% { opacity: 0; transform: translate(-50%, -50%) scale(1); }
+}
+`;
+document.head.appendChild(style);
+</script>
 {% endblock %}

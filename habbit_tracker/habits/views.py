@@ -5,7 +5,36 @@ from django.utils import timezone
 from datetime import timedelta
 from .models import Habit, HabitLog
 from .forms import HabitForm, HabitLogForm
+from .reminder_forms import ReminderSettingsForm
 
+
+@login_required
+def reminder_settings_view(request):
+    """Настройка напоминаний"""
+    try:
+        settings = request.user.reminder_settings
+    except ReminderSettings.DoesNotExist:
+        settings = ReminderSettings.objects.create(user=request.user)
+
+    if request.method == 'POST':
+        form = ReminderSettingsForm(request.POST, instance=settings)
+        if form.is_valid():
+            form.save()
+            messages.success(request, 'Настройки напоминаний сохранены!')
+            return redirect('reminder_settings')
+    else:
+        form = ReminderSettingsForm(instance=settings)
+
+    # Дополнительный контекст для шаблона
+    context = {
+        'form': form,
+        'active_habits_count': Habit.objects.filter(user=request.user, is_active=True).count(),
+        'next_reminder_time': settings.reminder_time if settings.enabled else None,
+        # В реальном приложении здесь нужно получить время последней отправки
+        'last_sent': None,  # Заглушка, можно получить из логов
+    }
+
+    return render(request, 'habits/reminder_settings.html', context)
 
 @login_required
 def index(request):

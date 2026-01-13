@@ -87,3 +87,15 @@ class HabitLog(models.Model):
     def __str__(self):
         status = "✓" if self.completed else "✗"
         return f"{self.habit.name} - {self.date}: {status}"
+
+class ReminderSettings(models.Model):
+    """Настройки напоминаний для пользователя"""
+    user = models.OneToOneField(User, on_delete=models.CASCADE, related_name='reminder_settings')
+    enabled = models.BooleanField(default=True, verbose_name='Включить напоминания')
+    reminder_time = models.TimeField(default='09:00', verbose_name='Время напоминания')
+    email_notifications = models.BooleanField(default=True, verbose_name='Email уведомления')
+    telegram_notifications = models.BooleanField(default=False, verbose_name='Telegram уведомления')
+    telegram_chat_id = models.CharField(max_length=100, blank=True, verbose_name='Telegram Chat ID')
+
+    def __str__(self):
+        return f"Напоминания для {self.user.username}"

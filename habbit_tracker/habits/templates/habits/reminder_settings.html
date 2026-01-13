@@ -1,0 +1,189 @@
+{% extends 'habits/base.html' %}
+
+{% block title %}Настройки напоминаний{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row justify-content-center">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h4 class="mb-0">🔔 Настройки напоминаний</h4>
+                </div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.enabled }}
+                                <label class="form-check-label" for="{{ form.enabled.id_for_label }}">
+                                    <strong>Включить напоминания</strong>
+                                </label>
+                            </div>
+                            {% if form.enabled.errors %}
+                                <div class="text-danger small">{{ form.enabled.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Получать ежедневные напоминания о привычках
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="{{ form.reminder_time.id_for_label }}" class="form-label">
+                                Время напоминания
+                            </label>
+                            {{ form.reminder_time }}
+                            {% if form.reminder_time.errors %}
+                                <div class="text-danger small">{{ form.reminder_time.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                В какое время присылать напоминания
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.email_notifications }}
+                                <label class="form-check-label" for="{{ form.email_notifications.id_for_label }}">
+                                    <strong>Email уведомления</strong>
+                                </label>
+                            </div>
+                            {% if form.email_notifications.errors %}
+                                <div class="text-danger small">{{ form.email_notifications.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Получать напоминания на email
+                            </div>
+                        </div>
+
+                        <div class="mb-3">
+                            <div class="form-check form-switch">
+                                {{ form.telegram_notifications }}
+                                <label class="form-check-label" for="{{ form.telegram_notifications.id_for_label }}">
+                                    <strong>Telegram уведомления</strong>
+                                </label>
+                            </div>
+                            {% if form.telegram_notifications.errors %}
+                                <div class="text-danger small">{{ form.telegram_notifications.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Получать напоминания в Telegram (функция в разработке)
+                            </div>
+                        </div>
+
+                        {% if form.telegram_notifications.value %}
+                        <div class="mb-3" id="telegram-fields">
+                            <label for="{{ form.telegram_chat_id.id_for_label }}" class="form-label">
+                                Telegram Chat ID
+                            </label>
+                            {{ form.telegram_chat_id }}
+                            {% if form.telegram_chat_id.errors %}
+                                <div class="text-danger small">{{ form.telegram_chat_id.errors }}</div>
+                            {% endif %}
+                            <div class="form-text">
+                                Ваш ID чата в Telegram
+                            </div>
+                        </div>
+                        {% endif %}
+
+                        <div class="d-grid gap-2 d-md-flex justify-content-md-end mt-4">
+                            <a href="{% url 'index' %}" class="btn btn-secondary me-md-2">Отмена</a>
+                            <button type="submit" class="btn btn-primary">Сохранить настройки</button>
+                        </div>
+                    </form>
+
+                    <hr class="my-4">
+
+                    <div class="alert alert-info">
+                        <h5 class="alert-heading">ℹ️ Как это работает</h5>
+                        <ul class="mb-0">
+                            <li>Напоминания отправляются ежедневно в указанное время</li>
+                            <li>Вы получите список привычек, которые не были выполнены сегодня</li>
+                            <li>Для работы email уведомлений должен быть настроен SMTP сервер</li>
+                            <li>Telegram уведомления будут добавлены в будущих версиях</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Статистика напоминаний</h5>
+                </div>
+                <div class="card-body">
+                    <div class="mb-3">
+                        <h6>Активные привычки:</h6>
+                        <div class="display-6 text-primary">{{ active_habits_count }}</div>
+                        <small class="text-muted">привычек требуют напоминаний</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <h6>Следующее напоминание:</h6>
+                        {% if next_reminder_time %}
+                            <div class="text-success">{{ next_reminder_time|time:"H:i" }}</div>
+                            <small class="text-muted">сегодня</small>
+                        {% else %}
+                            <div class="text-muted">Не запланировано</div>
+                        {% endif %}
+                    </div>
+
+                    <div>
+                        <h6>Последняя отправка:</h6>
+                        {% if last_sent %}
+                            <div>{{ last_sent|date:"d.m.Y H:i" }}</div>
+                            <small class="text-muted">успешно отправлено</small>
+                        {% else %}
+                            <div class="text-muted">Еще не отправлялись</div>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mt-3">
+                <div class="card-header">
+                    <h5 class="mb-0">⚙️ Тестирование</h5>
+                </div>
+                <div class="card-body">
+                    <p class="card-text">Проверьте работу напоминаний прямо сейчас:</p>
+                    <form method="post" action="{% url 'test_reminder' %}">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-outline-primary w-100">
+                            Отправить тестовое напоминание
+                        </button>
+                    </form>
+                    <small class="text-muted d-block mt-2">
+                        Вы получите email со списком ваших привычек
+                    </small>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Показываем/скрываем поле Telegram Chat ID при переключении
+document.getElementById('{{ form.telegram_notifications.id_for_label }}').addEventListener('change', function() {
+    const telegramFields = document.getElementById('telegram-fields');
+    if (telegramFields) {
+        telegramFields.style.display = this.checked ? 'block' : 'none';
+    }
+});
+
+// Добавляем классы Bootstrap к полям формы
+document.addEventListener('DOMContentLoaded', function() {
+    const timeField = document.getElementById('{{ form.reminder_time.id_for_label }}');
+    if (timeField) {
+        timeField.className = 'form-control';
+        timeField.type = 'time';
+    }
+
+    const telegramField = document.getElementById('{{ form.telegram_chat_id.id_for_label }}');
+    if (telegramField) {
+        telegramField.className = 'form-control';
+    }
+});
+</script>
+{% endblock %}
