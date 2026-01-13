@@ -1,0 +1,106 @@
+{% extends 'habits/base.html' %}
+
+{% block title %}Мои достижения{% endblock %}
+
+{% block content %}
+<div class="container">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1>🏆 Мои достижения</h1>
+            <p class="lead">Ваш прогресс в формировании привычек</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="display-4">{{ total_achievements }}</h2>
+                    <p class="text-muted">Всего достижений</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="display-4">
+                        {% if best_streak %}{{ best_streak.streak_length }}{% else %}0{% endif %}
+                    </h2>
+                    <p class="text-muted">Лучшая серия</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card text-center">
+                <div class="card-body">
+                    <h2 class="display-4">
+                        {{ request.user.habits.count }}
+                    </h2>
+                    <p class="text-muted">Активных привычек</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">История достижений</h5>
+                </div>
+                <div class="card-body">
+                    {% if achievements %}
+                    <div class="row">
+                        {% for achievement in achievements %}
+                        <div class="col-md-6 mb-3">
+                            <div class="card {% if achievement.is_public %}border-success{% endif %}">
+                                <div class="card-body">
+                                    <div class="d-flex justify-content-between align-items-start">
+                                        <div>
+                                            <h5 class="card-title">{{ achievement.title }}</h5>
+                                            <p class="card-text">{{ achievement.description }}</p>
+                                            <small class="text-muted">
+                                                Привычка: {{ achievement.habit.name }}<br>
+                                                {{ achievement.achieved_at|date:"d.m.Y H:i" }}
+                                            </small>
+                                        </div>
+                                        <div class="text-end">
+                                            <span class="badge bg-primary fs-6">
+                                                {{ achievement.streak_length }} дней
+                                            </span>
+                                            <div class="mt-2">
+                                                <form method="post" action="{% url 'share_achievement' achievement.id %}" class="d-inline">
+                                                    {% csrf_token %}
+                                                    <div class="form-check form-switch">
+                                                        <input class="form-check-input" type="checkbox"
+                                                               id="public{{ achievement.id }}"
+                                                               {% if achievement.is_public %}checked{% endif %}
+                                                               onchange="this.form.submit()">
+                                                        <label class="form-check-label" for="public{{ achievement.id }}">
+                                                            Публично
+                                                        </label>
+                                                    </div>
+                                                </form>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                        {% endfor %}
+                    </div>
+                    {% else %}
+                    <div class="text-center py-5">
+                        <h4>У вас пока нет достижений</h4>
+                        <p class="text-muted">Продолжайте выполнять привычки, чтобы получать достижения!</p>
+                        <a href="{% url 'index' %}" class="btn btn-primary">К привычкам</a>
+                    </div>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

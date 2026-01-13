@@ -8,12 +8,71 @@ from django.shortcuts import get_object_or_404
 from django.utils import timezone
 from datetime import timedelta
 from .models import Habit, HabitLog
+from .models import Achievement
+from .social_forms import AchievementPostForm
 from .serializers import (
     HabitSerializer, HabitLogSerializer,
     HabitStatisticsSerializer, DailyCompletionSerializer,
     UserSerializer
 )
 
+
+# class AchievementPostViewSet(viewsets.ModelViewSet):
+#     """ViewSet для публикаций достижений"""
+#     serializer_class = AchievementPostSerializer
+#     permission_classes = [IsAuthenticated]
+
+#     def get_queryset(self):
+#         # Показываем только публичные или свои посты
+#         user = self.request.user
+#         if self.request.query_params.get('mine'):
+#             return AchievementPost.objects.filter(user=user)
+#         return AchievementPost.objects.filter(is_public=True)
+
+#     def perform_create(self, serializer):
+#         serializer.save(user=self.request.user)
+
+
+# class SocialAPIView(generics.GenericAPIView):
+#     """API для социальных функций"""
+#     permission_classes = [IsAuthenticated]
+
+#     def get(self, request):
+#         # Статистика сообщества
+#         total_users = User.objects.count()
+#         total_posts = AchievementPost.objects.filter(is_public=True).count()
+#         total_streak_days = sum(
+#             post.streak for post in AchievementPost.objects.filter(is_public=True)
+#         )
+
+#         # Популярные привычки
+#         from django.db.models import Count
+#         popular_habits = Habit.objects.annotate(
+#             post_count=Count('achievements')
+#         ).filter(post_count__gt=0).order_by('-post_count')[:5]
+
+#         # Последние достижения
+#         recent_achievements = AchievementPost.objects.filter(
+#             is_public=True
+#         ).select_related('user', 'habit').order_by('-created_at')[:10]
+
+#         return Response({
+#             'community_stats': {
+#                 'total_users': total_users,
+#                 'total_posts': total_posts,
+#                 'total_streak_days': total_streak_days,
+#             },
+#             'popular_habits': [
+#                 {
+#                     'id': habit.id,
+#                     'name': habit.name,
+#                     'post_count': habit.post_count,
+#                     'user_count': habit.user_count if hasattr(habit, 'user_count') else 1
+#                 }
+#                 for habit in popular_habits
+#             ],
+#             'recent_achievements': AchievementPostSerializer(recent_achievements, many=True).data
+#         })
 
 class CustomAuthToken(ObtainAuthToken):
     """Кастомный endpoint для получения токена"""
