@@ -1,0 +1,65 @@
+{% extends 'habits/base.html' %}
+
+{% block content %}
+<div class="row justify-content-center">
+    <div class="col-md-6">
+        <div class="card">
+            <div class="card-header">
+                <h4 class="mb-0">Создать новую привычку</h4>
+            </div>
+            <div class="card-body">
+                <form method="post">
+                    {% csrf_token %}
+
+                    <div class="mb-3">
+                        <label for="{{ form.name.id_for_label }}" class="form-label">Название привычки *</label>
+                        {{ form.name }}
+                        {% if form.name.errors %}
+                            <div class="text-danger">{{ form.name.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="{{ form.description.id_for_label }}" class="form-label">Описание</label>
+                        {{ form.description }}
+                        {% if form.description.errors %}
+                            <div class="text-danger">{{ form.description.errors }}</div>
+                        {% endif %}
+                    </div>
+
+                    <div class="row mb-3">
+                        <div class="col-md-6">
+                            <label for="{{ form.frequency.id_for_label }}" class="form-label">Периодичность</label>
+                            {{ form.frequency }}
+                            {% if form.frequency.errors %}
+                                <div class="text-danger">{{ form.frequency.errors }}</div>
+                            {% endif %}
+                        </div>
+
+                        <div class="col-md-6">
+                            <label for="{{ form.target.id_for_label }}" class="form-label">Цель (дней подряд)</label>
+                            {{ form.target }}
+                            {% if form.target.errors %}
+                                <div class="text-danger">{{ form.target.errors }}</div>
+                            {% endif %}
+                        </div>
+                    </div>
+
+                    <div class="d-grid gap-2 d-md-flex justify-content-md-end">
+                        <a href="{% url 'index' %}" class="btn btn-secondary me-md-2">Отмена</a>
+                        <button type="submit" class="btn btn-primary">Сохранить привычку</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+// Добавляем классы Bootstrap к полям формы
+document.getElementById('{{ form.name.id_for_label }}').className = 'form-control';
+document.getElementById('{{ form.description.id_for_label }}').className = 'form-control';
+document.getElementById('{{ form.frequency.id_for_label }}').className = 'form-select';
+document.getElementById('{{ form.target.id_for_label }}').className = 'form-control';
+</script>
+{% endblock %}
