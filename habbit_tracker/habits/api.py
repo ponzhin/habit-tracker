@@ -38,7 +38,7 @@ class HabitViewSet(viewsets.ModelViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        return Habit.objects.filter(user=self.request.user)
+        return Habit.objects.filter(user=self.request.user).order_by('-created_at')
 
     @action(detail=True, methods=['post'])
     def log_today(self, request, pk=None):

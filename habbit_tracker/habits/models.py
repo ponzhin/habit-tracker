@@ -29,6 +29,10 @@ class Habit(models.Model):
     created_at = models.DateTimeField(auto_now_add=True)
     is_active = models.BooleanField(default=True, verbose_name='Активна')
 
+    def completed_logs_count(self):
+        """Количество выполненных отметок"""
+        return self.logs.filter(completed=True).count()
+
     def __str__(self):
         return f"{self.name} ({self.user.username})"
 

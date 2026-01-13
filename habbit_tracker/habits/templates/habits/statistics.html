@@ -66,7 +66,7 @@
             <div class="card border-info">
                 <div class="card-body text-center">
                     <h5 class="card-title text-muted">Общий прогресс</h5>
-                    <div class="display-4 text-info">{{ habit.logs.filter(completed=True).count }}</div>
+                    <div class="display-4 text-info">{{ habit.completed_logs_count }}</div>
                     <p class="card-text">всего выполнено</p>
                 </div>
             </div>
