@@ -1,0 +1,236 @@
+{% extends 'habits/base.html' %}
+
+{% block title %}Статистика - {{ habit.name }}{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <nav aria-label="breadcrumb">
+                <ol class="breadcrumb">
+                    <li class="breadcrumb-item"><a href="{% url 'index' %}">Главная</a></li>
+                    <li class="breadcrumb-item active">Статистика: {{ habit.name }}</li>
+                </ol>
+            </nav>
+
+            <div class="d-flex justify-content-between align-items-center">
+                <h1 class="h2">📊 Статистика: {{ habit.name }}</h1>
+                <div>
+                    <a href="{% url 'calendar' habit.id %}" class="btn btn-outline-primary">
+                        📅 Календарь
+                    </a>
+                    <a href="{% url 'index' %}" class="btn btn-secondary">Назад</a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Карточки с общей статистикой -->
+    <div class="row mb-4">
+        <div class="col-md-3">
+            <div class="card border-primary">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">Выполнено за 30 дней</h5>
+                    <div class="display-4 text-primary">{{ completed_days }}/{{ total_days }}</div>
+                    <div class="progress mt-2" style="height: 10px;">
+                        <div class="progress-bar bg-primary" role="progressbar"
+                             style="width: {{ completion_rate }}%">
+                        </div>
+                    </div>
+                    <p class="card-text mt-2">{{ completion_rate }}% успеха</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-success">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">Текущая серия</h5>
+                    <div class="display-4 text-success">{{ habit.get_current_streak }}</div>
+                    <p class="card-text">дней подряд</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-warning">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">Лучшая серия</h5>
+                    <div class="display-4 text-warning">{{ best_streak }}</div>
+                    <p class="card-text">дней подряд</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-3">
+            <div class="card border-info">
+                <div class="card-body text-center">
+                    <h5 class="card-title text-muted">Общий прогресс</h5>
+                    <div class="display-4 text-info">{{ habit.logs.filter(completed=True).count }}</div>
+                    <p class="card-text">всего выполнено</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Графики -->
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📈 Динамика выполнения за 30 дней</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="completionChart" height="100"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📅 Еженедельная статистика</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-sm">
+                            <thead>
+                                <tr>
+                                    <th>Неделя</th>
+                                    <th>Выполнено</th>
+                                    <th>%</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for week in weekly_stats %}
+                                <tr>
+                                    <td>{{ week.week }}</td>
+                                    <td>{{ week.completed }}/{{ week.total }}</td>
+                                    <td>
+                                        <span class="badge bg-{% if week.percentage >= 80 %}success{% elif week.percentage >= 60 %}info{% elif week.percentage >= 40 %}warning{% else %}danger{% endif %}">
+                                            {{ week.percentage }}%
+                                        </span>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-md-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">🔥 Серия выполнения</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="streakChart" height="80"></canvas>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+// График выполнения
+const completionCtx = document.getElementById('completionChart').getContext('2d');
+const completionChart = new Chart(completionCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ dates|safe }},
+        datasets: [{
+            label: 'Выполнено',
+            data: {{ completed_data|safe }},
+            backgroundColor: function(context) {
+                const value = context.dataset.data[context.dataIndex];
+                return value === 1 ? '#28a745' : '#dc3545';
+            },
+            borderColor: '#fff',
+            borderWidth: 1,
+            borderRadius: 3,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return context.raw === 1 ? 'Выполнено' : 'Не выполнено';
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                ticks: {
+                    callback: function(value) {
+                        return value === 1 ? '✓' : '✗';
+                    }
+                },
+                max: 1,
+                min: 0
+            },
+            x: {
+                ticks: {
+                    maxTicksLimit: 15
+                }
+            }
+        }
+    }
+});
+
+// График серии
+const streakCtx = document.getElementById('streakChart').getContext('2d');
+const streakChart = new Chart(streakCtx, {
+    type: 'line',
+    data: {
+        labels: {{ dates|safe }},
+        datasets: [{
+            label: 'Текущая серия (дней подряд)',
+            data: {{ streak_data|safe }},
+            borderColor: '#ffc107',
+            backgroundColor: 'rgba(255, 193, 7, 0.1)',
+            tension: 0.3,
+            fill: true
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `${context.parsed.y} дней подряд`;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                title: {
+                    display: true,
+                    text: 'Дней подряд'
+                }
+            },
+            x: {
+                ticks: {
+                    maxTicksLimit: 15
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

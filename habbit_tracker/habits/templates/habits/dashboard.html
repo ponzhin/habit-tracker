@@ -1,0 +1,187 @@
+{% extends 'habits/base.html' %}
+
+{% block title %}Дашборд{% endblock %}
+
+{% block content %}
+<div class="container-fluid">
+    <div class="row mb-4">
+        <div class="col-12">
+            <h1 class="h2">📈 Дашборд привычек</h1>
+            <p class="lead">Общая статистика по всем вашим привычкам</p>
+        </div>
+    </div>
+
+    <div class="row mb-4">
+        <div class="col-md-8">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📊 Прогресс по всем привычкам</h5>
+                </div>
+                <div class="card-body">
+                    <canvas id="habitsChart" height="120"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-4">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">🎯 Общая статистика</h5>
+                </div>
+                <div class="card-body text-center">
+                    <div class="display-4 text-primary mb-2">{{ total_habits }}</div>
+                    <p class="text-muted">активных привычек</p>
+
+                    <div class="display-4 text-success mb-2">{{ average_completion }}%</div>
+                    <p class="text-muted">средний процент выполнения</p>
+
+                    <a href="{% url 'index' %}" class="btn btn-primary w-100 mt-3">
+                        📝 Управление привычками
+                    </a>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="row">
+        <div class="col-12">
+            <div class="card">
+                <div class="card-header">
+                    <h5 class="mb-0">📋 Детальная статистика по привычкам</h5>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table class="table table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Привычка</th>
+                                    <th>Текущая серия</th>
+                                    <th>Выполнение (30 дней)</th>
+                                    <th>Статус</th>
+                                    <th>Действия</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for stat in stats %}
+                                <tr>
+                                    <td>
+                                        <strong>{{ stat.habit.name }}</strong><br>
+                                        <small class="text-muted">{{ stat.habit.description|truncatechars:50 }}</small>
+                                    </td>
+                                    <td>
+                                        <span class="badge bg-secondary fs-6">
+                                            {{ stat.current_streak }} дней
+                                        </span>
+                                    </td>
+                                    <td>
+                                        <div class="d-flex align-items-center">
+                                            <div class="progress flex-grow-1 me-2" style="height: 20px;">
+                                                <div class="progress-bar bg-{{ stat.status }}"
+                                                     style="width: {{ stat.completion_rate }}%">
+                                                    {{ stat.completion_rate }}%
+                                                </div>
+                                            </div>
+                                            <span class="text-nowrap">
+                                                {{ stat.habit.logs.filter(completed=True).count }} всего
+                                            </span>
+                                        </div>
+                                    </td>
+                                    <td>
+                                        {% if stat.completion_rate >= 80 %}
+                                            <span class="badge bg-success">Отлично</span>
+                                        {% elif stat.completion_rate >= 60 %}
+                                            <span class="badge bg-info">Хорошо</span>
+                                        {% elif stat.completion_rate >= 40 %}
+                                            <span class="badge bg-warning">Средне</span>
+                                        {% else %}
+                                            <span class="badge bg-danger">Нужно улучшить</span>
+                                        {% endif %}
+                                    </td>
+                                    <td>
+                                        <div class="btn-group btn-group-sm">
+                                            <a href="{% url 'statistics' stat.habit.id %}"
+                                               class="btn btn-outline-primary">
+                                                📊
+                                            </a>
+                                            <a href="{% url 'calendar' stat.habit.id %}"
+                                               class="btn btn-outline-secondary">
+                                                📅
+                                            </a>
+                                            <a href="{% url 'log_habit' stat.habit.id %}"
+                                               class="btn btn-outline-success">
+                                                ✓
+                                            </a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% empty %}
+                                <tr>
+                                    <td colspan="5" class="text-center py-4">
+                                        <div class="text-muted">
+                                            У вас еще нет привычек.
+                                            <a href="{% url 'create_habit' %}">Создайте первую!</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+{{ block.super }}
+<script>
+const habitsCtx = document.getElementById('habitsChart').getContext('2d');
+const habitsChart = new Chart(habitsCtx, {
+    type: 'bar',
+    data: {
+        labels: {{ habit_names|safe }},
+        datasets: [{
+            label: 'Процент выполнения за 30 дней',
+            data: {{ completion_rates|safe }},
+            backgroundColor: function(context) {
+                const value = context.dataset.data[context.dataIndex];
+                if (value >= 80) return '#28a745';
+                if (value >= 60) return '#17a2b8';
+                if (value >= 40) return '#ffc107';
+                return '#dc3545';
+            },
+            borderColor: '#fff',
+            borderWidth: 2,
+            borderRadius: 5,
+        }]
+    },
+    options: {
+        responsive: true,
+        plugins: {
+            legend: {
+                display: false
+            },
+            tooltip: {
+                callbacks: {
+                    label: function(context) {
+                        return `${context.parsed.y}% выполнения`;
+                    }
+                }
+            }
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                max: 100,
+                title: {
+                    display: true,
+                    text: 'Процент выполнения (%)'
+                }
+            }
+        }
+    }
+});
+</script>
+{% endblock %}

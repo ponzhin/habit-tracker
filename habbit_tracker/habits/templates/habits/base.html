@@ -20,6 +20,7 @@
             border-radius: 4px;
         }
     </style>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body>
     <div class="container">
@@ -28,6 +29,7 @@
                 <a class="navbar-brand" href="{% url 'index' %}">🎯 Трекер привычек</a>
                 <div class="navbar-nav">
                     {% if user.is_authenticated %}
+                        <a class="nav-link" href="{% url 'dashboard' %}">📊 Дашборд</a>
                         <a class="nav-link" href="{% url 'create_habit' %}">+ Новая привычка</a>
                         <span class="navbar-text mx-3">Привет, {{ user.username }}!</span>
                         <a class="nav-link" href="{% url 'logout' %}">Выйти</a>
